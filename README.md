@@ -24,7 +24,8 @@ Secrets Manager.
 
 ```
 app/     Flask app (/health, /version), tests, Dockerfile
-infra/   Terraform (VPC, ECR, ECS, ALB, pipeline, alarms)
+infra/   Terraform (bootstrap state bucket, network; later ECS/ALB, pipeline, alarms)
+scripts/ teardown.sh (destroys billable infra)
 ```
 
 ## Roadmap
@@ -33,7 +34,7 @@ infra/   Terraform (VPC, ECR, ECS, ALB, pipeline, alarms)
 |-------|------|--------|
 | 0 | Setup: AWS account/IAM user, budget alert, repo | In progress |
 | 1 | Containerize the app | Done (locally) |
-| 2 | Networking with Terraform (VPC, subnets, SGs, remote state) | |
+| 2 | Networking with Terraform (VPC, subnets, SGs, remote state) | Code written, not yet applied |
 | 3 | ECR + ECS Fargate + ALB, deployed manually | |
 | 4 | CI with CodeBuild (test, build, push to ECR) | |
 | 5 | CodePipeline for dev | |

@@ -11,6 +11,8 @@ __pycache__/
 crash.log
 *.tfvars
 !example.tfvars
+backend.hcl
+!backend.hcl.example
 
 # Secrets / local
 .env
@@ -20,6 +22,3 @@ crash.log
 .DS_Store
 .vscode/
 .idea/
-
-# Windows download markers
-*:Zone.Identifier
