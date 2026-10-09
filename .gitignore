@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!example.tfvars
+
+# Secrets / local
+.env
+*.pem
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Windows download markers
+*:Zone.Identifier
