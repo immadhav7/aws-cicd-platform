@@ -24,8 +24,9 @@ Secrets Manager.
 
 ```
 app/     Flask app (/health, /version), tests, Dockerfile
-infra/   Terraform (bootstrap, registry, network, platform; later pipeline and alarms)
-scripts/ push-image.sh (build and push to ECR), teardown.sh (destroys billable infra)
+infra/   Terraform (bootstrap, registry, network, platform, pipeline; later alarms)
+buildspec.yml  CodeBuild steps: test, build image, push to ECR tagged with the commit SHA
+scripts/ push-image.sh (manual push), start-build.sh (run CodeBuild), teardown.sh (destroys billable infra)
 ```
 
 ## Roadmap
@@ -35,8 +36,8 @@ scripts/ push-image.sh (build and push to ECR), teardown.sh (destroys billable i
 | 0 | Setup: AWS account/IAM user, budget alert, repo | In progress |
 | 1 | Containerize the app | Done |
 | 2 | Networking with Terraform (VPC, subnets, SGs, remote state) | Done |
-| 3 | ECR + ECS Fargate + ALB, deployed manually | Code written, not yet applied |
-| 4 | CI with CodeBuild (test, build, push to ECR) | |
+| 3 | ECR + ECS Fargate + ALB, deployed manually | Done |
+| 4 | CI with CodeBuild (test, build, push to ECR) | Code written, not yet applied |
 | 5 | CodePipeline for dev | |
 | 6 | Multi-environment + manual approval | |
 | 7 | Blue/green with CodeDeploy and automatic rollback | |
