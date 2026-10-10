@@ -49,9 +49,9 @@ variable "repository_name" {
 resource "aws_ecr_repository" "app" {
   name = var.repository_name
 
-  # MUTABLE while we push by hand and may reuse a tag. Switch to IMMUTABLE in Phase 4,
-  # when every tag is a unique commit SHA.
-  image_tag_mutability = "MUTABLE"
+  # IMMUTABLE: a tag can never be overwritten, so a tag (a commit SHA from CodeBuild) always
+  # points to the exact same image. Re-pushing an existing tag fails, which is the point.
+  image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true

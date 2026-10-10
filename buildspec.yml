@@ -1,0 +1,46 @@
+version: 0.2
+
+# CodeBuild runs this on every build: test, build the image, push it to ECR tagged with the
+# short commit SHA. ECR_REPOSITORY_URL is set on the CodeBuild project (infra/pipeline).
+
+env:
+  variables:
+    CONTAINER_NAME: app
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - pip install --quiet -r app/requirements.txt
+
+  pre_build:
+    commands:
+      - echo "Running unit tests"
+      - (cd app && python -m pytest -q)
+      # First 7 characters of the commit that CodeBuild checked out
+      - IMAGE_TAG=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
+      - echo "Image tag $IMAGE_TAG"
+      # Registry host is everything before the first "/" of the repository URL
+      - REGISTRY=${ECR_REPOSITORY_URL%%/*}
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+
+  build:
+    commands:
+      # Build and push in the same phase: if either fails, nothing after it runs.
+      - docker build --build-arg BUILD_ID="$IMAGE_TAG" -t "$ECR_REPOSITORY_URL:$IMAGE_TAG" app/
+      - docker push "$ECR_REPOSITORY_URL:$IMAGE_TAG"
+
+  post_build:
+    commands:
+      # post_build also runs after a failure, so only write the artifact on success.
+      # imagedefinitions.json is what CodePipeline's ECS deploy action reads (Phase 5).
+      - |
+        if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
+          printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$ECR_REPOSITORY_URL:$IMAGE_TAG" > imagedefinitions.json
+          cat imagedefinitions.json
+        fi
+
+artifacts:
+  files:
+    - imagedefinitions.json

@@ -1,4 +1,6 @@
-FROM python:3.12-slim
+# Official Docker Hub image, pulled from the ECR Public mirror: CodeBuild shares IP addresses,
+# so anonymous Docker Hub pulls there often hit "toomanyrequests" rate limits.
+FROM public.ecr.aws/docker/library/python:3.12-slim
 
 ARG BUILD_ID=dev
 ENV BUILD_ID=${BUILD_ID} \
