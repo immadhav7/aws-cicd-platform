@@ -35,43 +35,11 @@ data "aws_iam_policy_document" "assume" {
     }
 
     # The important line: only this repository, only this branch.
+    # GitHub now puts the numeric owner/repo IDs into the subject
+    # (repo:owner@<id>/name@<id>:...), so the ID form is allowed as well as the plain one.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:ref:refs/heads/${var.github_branch}"]
-    }
-  }
-}
-
-resource "aws_iam_role" "github_actions" {
-  name               = "${var.project}-github-actions"
-  assume_role_policy = data.aws_iam_policy_document.assume.json
-}
-
-data "aws_iam_policy_document" "ecr_push" {
-  # ecr:GetAuthorizationToken cannot be limited to a repository, so it needs "*".
-  statement {
-    sid       = "EcrLogin"
-    actions   = ["ecr:GetAuthorizationToken"]
-    resources = ["*"]
-  }
-
-  statement {
-    sid = "EcrPush"
-    actions = [
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:InitiateLayerUpload",
-      "ecr:UploadLayerPart",
-      "ecr:CompleteLayerUpload",
-      "ecr:PutImage",
-      "ecr:DescribeImages", # lets the workflow skip a commit that already has an image
-    ]
-    resources = [data.aws_ecr_repository.app.arn]
-  }
-}
-
-resource "aws_iam_role_policy" "ecr_push" {
-  name   = "${var.project}-github-actions-ecr-push"
-  role   = aws_iam_role.github_actions.id
-  policy = data.aws_iam_policy_document.ecr_push.json
-}
+      values = [
+        "repo:${var.github_repository}:ref:refs/heads/${var.github_branch}",
+        "repo:${var.github_repository_with_ids}:ref:
