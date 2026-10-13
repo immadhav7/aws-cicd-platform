@@ -1,4 +1,9 @@
-# github-oidc (temporary stopgap)
+# github-oidc (retired stopgap)
+
+This module was only needed while the CodeBuild quota was 0. CodePipeline and CodeBuild now do
+the build, so it is no longer used. To remove it: `terraform destroy` in this folder.
+
+Original description:
 
 AWS blocked CodeBuild on this account (concurrent builds quota = 0, increase requested), so
 GitHub Actions builds and pushes the image instead. It uses the same steps and the same
