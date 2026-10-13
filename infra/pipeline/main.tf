@@ -16,6 +16,9 @@ locals {
   # between sessions).
   ecs_service_arn         = "arn:aws:ecs:${var.region}:${local.account_id}:service/${var.ecs_cluster_name}/${var.ecs_service_name}"
   task_execution_role_arn = "arn:aws:iam::${local.account_id}:role/${var.task_execution_role_name}"
+
+  ecs_prod_service_arn         = "arn:aws:ecs:${var.region}:${local.account_id}:service/${var.ecs_prod_cluster_name}/${var.ecs_prod_service_name}"
+  prod_task_execution_role_arn = "arn:aws:iam::${local.account_id}:role/${var.prod_task_execution_role_name}"
 }
 
 # ---------------------------------------------------------------------------
@@ -195,6 +198,20 @@ resource "aws_codebuild_project" "app" {
 # ---------------------------------------------------------------------------
 # IAM: the role CodePipeline assumes.
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Manual approval: CodePipeline publishes to this topic and SNS emails you.
+# The subscription stays "pending" until you click the confirmation link in the first email.
+# ---------------------------------------------------------------------------
+resource "aws_sns_topic" "approvals" {
+  name = "${var.project}-pipeline-approvals"
+}
+
+resource "aws_sns_topic_subscription" "approver" {
+  topic_arn = aws_sns_topic.approvals.arn
+  protocol  = "email"
+  endpoint  = var.approval_email
+}
+
 data "aws_iam_policy_document" "pipeline_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -258,13 +275,19 @@ data "aws_iam_policy_document" "pipeline" {
   statement {
     sid       = "EcsUpdateService"
     actions   = ["ecs:UpdateService"]
-    resources = [local.ecs_service_arn]
+    resources = [local.ecs_service_arn, local.ecs_prod_service_arn]
+  }
+
+  statement {
+    sid       = "NotifyApprover"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.approvals.arn]
   }
 
   statement {
     sid       = "PassTaskExecutionRole"
     actions   = ["iam:PassRole"]
-    resources = [local.task_execution_role_arn]
+    resources = [local.task_execution_role_arn, local.prod_task_execution_role_arn]
 
     condition {
       test     = "StringEquals"
@@ -347,6 +370,43 @@ resource "aws_codepipeline" "app" {
       configuration = {
         ClusterName       = var.ecs_cluster_name
         ServiceName       = var.ecs_service_name
+        FileName          = "imagedefinitions.json"
+        DeploymentTimeout = "10"
+      }
+    }
+  }
+
+  stage {
+    name = "ApproveProd"
+
+    action {
+      name     = "Approve"
+      category = "Approval"
+      owner    = "AWS"
+      provider = "Manual"
+      version  = "1"
+
+      configuration = {
+        NotificationArn = aws_sns_topic.approvals.arn
+        CustomData      = "Dev deploy succeeded. Check the dev site, then approve to release the same image to prod."
+      }
+    }
+  }
+
+  stage {
+    name = "DeployProd"
+
+    action {
+      name            = "DeployProd"
+      category        = "Deploy"
+      owner           = "AWS"
+      provider        = "ECS"
+      version         = "1"
+      input_artifacts = ["build_output"]
+
+      configuration = {
+        ClusterName       = var.ecs_prod_cluster_name
+        ServiceName       = var.ecs_prod_service_name
         FileName          = "imagedefinitions.json"
         DeploymentTimeout = "10"
       }

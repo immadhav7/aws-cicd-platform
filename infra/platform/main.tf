@@ -17,10 +17,22 @@ data "terraform_remote_state" "network" {
 # The ECR repository comes from the registry module.
 data "aws_ecr_repository" "app" {
   name = var.ecr_repository_name
+
+  lifecycle {
+    precondition {
+      condition     = contains(["dev", "prod"], local.environment)
+      error_message = "Use the default workspace for dev or a workspace named prod: terraform workspace select default|prod"
+    }
+  }
 }
 
 locals {
-  name = "${var.project}-${var.environment}"
+  # The environment comes from the Terraform workspace: "default" is dev, "prod" is prod.
+  # Each workspace has its own state, so dev and prod never touch each other's resources.
+  environment   = terraform.workspace == "default" ? "dev" : terraform.workspace
+  desired_count = lookup(var.desired_count_by_environment, local.environment, 1)
+
+  name = "${var.project}-${local.environment}"
 
   vpc_id             = data.terraform_remote_state.network.outputs.vpc_id
   public_subnet_ids  = data.terraform_remote_state.network.outputs.public_subnet_ids
@@ -99,7 +111,7 @@ resource "aws_ecs_task_definition" "app" {
       # BUILD_ID is baked into the image at build time (the commit SHA), so /version always
       # reports what is really running. Do not override it here.
       environment = [
-        { name = "APP_ENV", value = var.environment },
+        { name = "APP_ENV", value = local.environment },
       ]
 
       logConfiguration = {
@@ -118,7 +130,7 @@ resource "aws_ecs_service" "app" {
   name            = local.name
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = var.desired_count
+  desired_count   = local.desired_count
   launch_type     = "FARGATE"
 
   # Give a new task time to start before the ALB health check can fail it.

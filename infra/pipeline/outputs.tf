@@ -18,3 +18,8 @@ output "connection_arn" {
 output "artifact_bucket" {
   value = aws_s3_bucket.artifacts.bucket
 }
+
+output "approval_topic_arn" {
+  description = "SNS topic that emails the manual approval request"
+  value       = aws_sns_topic.approvals.arn
+}

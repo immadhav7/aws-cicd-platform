@@ -14,3 +14,8 @@ output "service_name" {
 output "deployed_image" {
   value = local.image
 }
+
+output "environment" {
+  description = "Environment this workspace deployed (dev or prod)"
+  value       = local.environment
+}

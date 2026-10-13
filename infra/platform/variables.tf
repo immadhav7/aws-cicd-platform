@@ -10,12 +10,6 @@ variable "project" {
   default     = "aws-cicd"
 }
 
-variable "environment" {
-  description = "Environment name (dev now; prod is added in Phase 6)"
-  type        = string
-  default     = "dev"
-}
-
 variable "state_bucket" {
   description = "S3 bucket holding Terraform state (needed to read the network module's outputs)"
   type        = string
@@ -39,10 +33,13 @@ variable "app_port" {
   default     = 8080
 }
 
-variable "desired_count" {
-  description = "Number of running tasks"
-  type        = number
-  default     = 1
+variable "desired_count_by_environment" {
+  description = "Number of running tasks per environment (prod runs two, spread over two zones)"
+  type        = map(number)
+  default = {
+    dev  = 1
+    prod = 2
+  }
 }
 
 variable "cpu" {
