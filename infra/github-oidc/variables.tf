@@ -16,6 +16,12 @@ variable "github_repository" {
   default     = "immadhav7/aws-cicd-platform"
 }
 
+variable "github_repository_with_ids" {
+  description = "Same repository in GitHub's ID-qualified subject form, owner@ownerId/name@repoId"
+  type        = string
+  default     = "immadhav7@294408830/aws-cicd-platform@1411408971"
+}
+
 variable "github_branch" {
   description = "Only workflow runs on this branch can assume the role"
   type        = string
