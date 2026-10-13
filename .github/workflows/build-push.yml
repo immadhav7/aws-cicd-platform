@@ -46,18 +46,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # TEMPORARY: remove once the role can be assumed.
-      - name: Debug - show OIDC claims
-        run: |
-          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
-          echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | jq '{sub, aud, iss, repository, ref, job_workflow_ref}'
-      
-      - name: Debug - show role ARN
-        run: echo "[${{ vars.AWS_ROLE_ARN }}]" | sed 's/./& /g'
-        
       - name: Sign in to AWS (OIDC, no stored keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region:
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push the image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          TAG="${GITHUB_SHA::7}"
+          IMAGE="${REGISTRY}/${ECR_REPOSITORY}:${TAG}"
+
+          # ECR tags are immutable, so a re-run for the same commit must not push again.
+          if aws ecr describe-images --repository-name "${ECR_REPOSITORY}" --image-ids imageTag="${TAG}" >/dev/null 2>&1; then
+            echo "Image ${TAG} already exists, skipping build."
+            echo "Image \`${TAG}\` already existed, nothing pushed." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          docker build --build-arg BUILD_ID="${TAG}" -t "${IMAGE}" app/
+          docker push "${IMAGE}"
+          echo "Pushed \`${IMAGE}\`" >> "$GITHUB_STEP_SUMMARY"
