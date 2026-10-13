@@ -70,3 +70,5 @@ version is live after a deploy or a rollback.
 
 The ALB, NAT gateway, and Fargate tasks cost money while running. Run `terraform destroy`
 after every working session.
+
+CodeBuild quota approved (15 concurrent Linux/Small builds, ap-south-1).
