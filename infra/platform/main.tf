@@ -96,8 +96,9 @@ resource "aws_ecs_task_definition" "app" {
         protocol      = "tcp"
       }]
 
+      # BUILD_ID is baked into the image at build time (the commit SHA), so /version always
+      # reports what is really running. Do not override it here.
       environment = [
-        { name = "BUILD_ID", value = var.image_tag },
         { name = "APP_ENV", value = var.environment },
       ]
 
@@ -143,4 +144,10 @@ resource "aws_ecs_service" "app" {
 
   # The target group must be attached to a listener before the service can use it.
   depends_on = [aws_lb_listener.http]
+
+  # From Phase 5 the pipeline deploys new task definition revisions to this service.
+  # Terraform must not switch it back to the revision it created.
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }

@@ -1,7 +1,8 @@
 version: 0.2
 
-# CodeBuild runs this on every build: test, build the image, push it to ECR tagged with the
-# short commit SHA. ECR_REPOSITORY_URL is set on the CodeBuild project (infra/pipeline).
+# CodeBuild runs this on every pipeline execution: test, build the image, push it to ECR
+# tagged with the short commit SHA. ECR_REPOSITORY_URL is set on the CodeBuild project
+# (infra/pipeline). The pipeline's deploy stage reads imagedefinitions.json from here.
 
 env:
   variables:
@@ -18,23 +19,41 @@ phases:
     commands:
       - echo "Running unit tests"
       - (cd app && python -m pytest -q)
-      # First 7 characters of the commit that CodeBuild checked out
-      - IMAGE_TAG=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
-      - echo "Image tag $IMAGE_TAG"
+      # First 7 characters of the commit that CodePipeline checked out. If the value is not a
+      # commit SHA for some reason, fall back to the build number so the build still works.
+      - |
+        IMAGE_TAG=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
+        case "$IMAGE_TAG" in
+          [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) ;;
+          *) IMAGE_TAG="b${CODEBUILD_BUILD_NUMBER}" ;;
+        esac
+        echo "Image tag $IMAGE_TAG"
+      # ECR tags are immutable: if this commit was already built, reuse that image.
+      - |
+        if aws ecr describe-images --repository-name "${ECR_REPOSITORY_URL##*/}" --image-ids imageTag="$IMAGE_TAG" > /dev/null 2>&1; then
+          IMAGE_EXISTS=1
+        else
+          IMAGE_EXISTS=0
+        fi
+        echo "Image already in ECR: $IMAGE_EXISTS"
       # Registry host is everything before the first "/" of the repository URL
       - REGISTRY=${ECR_REPOSITORY_URL%%/*}
       - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
 
   build:
     commands:
-      # Build and push in the same phase: if either fails, nothing after it runs.
-      - docker build --build-arg BUILD_ID="$IMAGE_TAG" -t "$ECR_REPOSITORY_URL:$IMAGE_TAG" app/
-      - docker push "$ECR_REPOSITORY_URL:$IMAGE_TAG"
+      # Build and push in one command: if either fails, the build fails.
+      - |
+        if [ "$IMAGE_EXISTS" = "1" ]; then
+          echo "Image $IMAGE_TAG already exists, skipping build and push."
+        else
+          docker build --build-arg BUILD_ID="$IMAGE_TAG" -t "$ECR_REPOSITORY_URL:$IMAGE_TAG" app/ && docker push "$ECR_REPOSITORY_URL:$IMAGE_TAG"
+        fi
 
   post_build:
     commands:
       # post_build also runs after a failure, so only write the artifact on success.
-      # imagedefinitions.json is what CodePipeline's ECS deploy action reads (Phase 5).
+      # imagedefinitions.json is what CodePipeline's ECS deploy action reads.
       - |
         if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
           printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$ECR_REPOSITORY_URL:$IMAGE_TAG" > imagedefinitions.json

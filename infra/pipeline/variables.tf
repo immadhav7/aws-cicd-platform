@@ -16,14 +16,32 @@ variable "ecr_repository_name" {
   default     = "aws-cicd-app"
 }
 
-variable "github_repository_url" {
-  description = "HTTPS clone URL of the (public) GitHub repository CodeBuild builds from"
+variable "github_repository_id" {
+  description = "GitHub repository the pipeline builds, as owner/name"
   type        = string
-  default     = "https://github.com/immadhav7/aws-cicd-platform.git"
+  default     = "immadhav7/aws-cicd-platform"
 }
 
-variable "source_version" {
-  description = "Branch (or commit) built by default when a build is started without one"
+variable "github_branch" {
+  description = "Branch whose pushes start the pipeline"
   type        = string
   default     = "main"
+}
+
+variable "ecs_cluster_name" {
+  description = "ECS cluster the dev deploy stage updates (created by infra/platform)"
+  type        = string
+  default     = "aws-cicd-dev"
+}
+
+variable "ecs_service_name" {
+  description = "ECS service the dev deploy stage updates (created by infra/platform)"
+  type        = string
+  default     = "aws-cicd-dev"
+}
+
+variable "task_execution_role_name" {
+  description = "Name of the ECS task execution role (created by infra/platform); the deploy stage passes it to new task definitions"
+  type        = string
+  default     = "aws-cicd-dev-task-execution"
 }
