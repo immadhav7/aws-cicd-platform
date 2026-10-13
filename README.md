@@ -86,6 +86,44 @@ Design notes:
 - IAM is least privilege per service: CodeBuild can push to one repository, CodePipeline can
   update one ECS service and pass one role.
 
+### Screenshots
+
+**Before: /version reports the manually pushed image (v1)**
+
+![Before: /version reports the manually pushed image (v1)](docs/images/01-version-before-deploy-v1.png)
+
+**Terraform creates the pipeline; the GitHub connection is authorized**
+
+![Terraform creates the pipeline; the GitHub connection is authorized](docs/images/02-terraform-apply-pipeline-github-connection.png)
+
+**CodePipeline: Source, Build and DeployDev all succeeded**
+
+![CodePipeline: Source, Build and DeployDev all succeeded](docs/images/03-pipeline-all-stages-succeeded.png)
+
+**CodeBuild writes imagedefinitions.json for the ECS deploy action**
+
+![CodeBuild writes imagedefinitions.json for the ECS deploy action](docs/images/04-codebuild-log-imagedefinitions.png)
+
+**ECR repository with immutable tags**
+
+![ECR repository with immutable tags](docs/images/05-ecr-repository-immutable-tags.png)
+
+**Images tagged with the commit SHA**
+
+![Images tagged with the commit SHA](docs/images/06-ecr-images-sha-tags.png)
+
+**After: the pipeline deployed the new commit and /version reports it**
+
+![After: the pipeline deployed the new commit and /version reports it](docs/images/07-run-pipeline-and-version-after-deploy.png)
+
+**ALB target group with a healthy target**
+
+![ALB target group with a healthy target](docs/images/08-alb-target-group-healthy.png)
+
+**AWS approved the CodeBuild quota increase**
+
+![AWS approved the CodeBuild quota increase](docs/images/09-aws-quota-increase-approved.png)
+
 ## Problems solved along the way
 
 - **CodeBuild quota was 0** on a new account. I requested an increase (approved: 15 concurrent
