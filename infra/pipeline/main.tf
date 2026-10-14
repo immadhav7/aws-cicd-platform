@@ -275,7 +275,24 @@ data "aws_iam_policy_document" "pipeline" {
   statement {
     sid       = "EcsUpdateService"
     actions   = ["ecs:UpdateService"]
-    resources = [local.ecs_service_arn, local.ecs_prod_service_arn]
+    resources = [local.ecs_service_arn]
+  }
+
+  # Prod is deployed by CodeDeploy (blue/green); the pipeline only starts and follows the deployment.
+  statement {
+    sid = "StartProdDeployment"
+    actions = [
+      "codedeploy:CreateDeployment",
+      "codedeploy:GetDeployment",
+      "codedeploy:GetDeploymentConfig",
+      "codedeploy:GetApplicationRevision",
+      "codedeploy:RegisterApplicationRevision",
+    ]
+    resources = [
+      "arn:aws:codedeploy:${var.region}:${local.account_id}:application:${var.codedeploy_app_name}",
+      "arn:aws:codedeploy:${var.region}:${local.account_id}:deploymentgroup:${var.codedeploy_app_name}/${var.codedeploy_deployment_group_name}",
+      "arn:aws:codedeploy:${var.region}:${local.account_id}:deploymentconfig:*",
+    ]
   }
 
   statement {
@@ -400,15 +417,19 @@ resource "aws_codepipeline" "app" {
       name            = "DeployProd"
       category        = "Deploy"
       owner           = "AWS"
-      provider        = "ECS"
+      provider        = "CodeDeployToECS"
       version         = "1"
       input_artifacts = ["build_output"]
 
+      # Blue/green: CodeDeploy registers taskdef.json, starts the new tasks in the idle target
+      # group, shifts traffic in steps and rolls back if the alarm fires (see infra/platform).
       configuration = {
-        ClusterName       = var.ecs_prod_cluster_name
-        ServiceName       = var.ecs_prod_service_name
-        FileName          = "imagedefinitions.json"
-        DeploymentTimeout = "10"
+        ApplicationName                = var.codedeploy_app_name
+        DeploymentGroupName            = var.codedeploy_deployment_group_name
+        TaskDefinitionTemplateArtifact = "build_output"
+        TaskDefinitionTemplatePath     = "taskdef.json"
+        AppSpecTemplateArtifact        = "build_output"
+        AppSpecTemplatePath            = "appspec.yaml"
       }
     }
   }

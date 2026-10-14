@@ -53,3 +53,21 @@ variable "memory" {
   type        = number
   default     = 512
 }
+
+variable "deployment_config_name" {
+  description = "How CodeDeploy shifts prod traffic. Canary: 10% first, the rest after 5 minutes if the alarm stays quiet"
+  type        = string
+  default     = "CodeDeployDefault.ECSCanary10Percent5Minutes"
+}
+
+variable "blue_termination_wait_minutes" {
+  description = "Minutes to keep the old (blue) tasks after a successful deployment before stopping them"
+  type        = number
+  default     = 1
+}
+
+variable "alarm_5xx_threshold" {
+  description = "Prod rolls back when the app returns at least this many 5xx responses within one minute"
+  type        = number
+  default     = 5
+}

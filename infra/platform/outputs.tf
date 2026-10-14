@@ -19,3 +19,18 @@ output "environment" {
   description = "Environment this workspace deployed (dev or prod)"
   value       = local.environment
 }
+
+output "codedeploy_app_name" {
+  description = "CodeDeploy application (prod only)"
+  value       = try(aws_codedeploy_app.app[0].name, null)
+}
+
+output "codedeploy_deployment_group" {
+  description = "CodeDeploy deployment group (prod only)"
+  value       = try(aws_codedeploy_deployment_group.app[0].deployment_group_name, null)
+}
+
+output "rollback_alarm" {
+  description = "CloudWatch alarm that triggers the automatic rollback (prod only)"
+  value       = try(aws_cloudwatch_metric_alarm.http_5xx[0].alarm_name, null)
+}

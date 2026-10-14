@@ -68,3 +68,15 @@ variable "prod_task_execution_role_name" {
   type        = string
   default     = "aws-cicd-prod-task-execution"
 }
+
+variable "codedeploy_app_name" {
+  description = "CodeDeploy application for prod (created by infra/platform, workspace prod)"
+  type        = string
+  default     = "aws-cicd-prod"
+}
+
+variable "codedeploy_deployment_group_name" {
+  description = "CodeDeploy deployment group for prod (created by infra/platform, workspace prod)"
+  type        = string
+  default     = "aws-cicd-prod"
+}

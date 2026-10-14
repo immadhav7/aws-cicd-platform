@@ -58,8 +58,14 @@ phases:
         if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
           printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$ECR_REPOSITORY_URL:$IMAGE_TAG" > imagedefinitions.json
           cat imagedefinitions.json
+          # Files for the prod blue/green deploy (CodeDeploy): fill in the image, account and region.
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          sed -e "s|__IMAGE__|$ECR_REPOSITORY_URL:$IMAGE_TAG|" -e "s|__ACCOUNT_ID__|$ACCOUNT_ID|" -e "s|__REGION__|$AWS_DEFAULT_REGION|" deploy/taskdef.json > taskdef.json
+          cp deploy/appspec.yaml appspec.yaml
         fi
 
 artifacts:
   files:
     - imagedefinitions.json
+    - taskdef.json
+    - appspec.yaml

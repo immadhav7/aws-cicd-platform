@@ -136,10 +136,24 @@ resource "aws_ecs_service" "app" {
   # Give a new task time to start before the ALB health check can fail it.
   health_check_grace_period_seconds = 30
 
-  # If a new deployment keeps failing, stop it and roll back to the last good one.
-  deployment_circuit_breaker {
-    enable   = true
-    rollback = true
+  # Prod: CodeDeploy runs blue/green deployments (see bluegreen.tf).
+  dynamic "deployment_controller" {
+    for_each = local.blue_green ? [1] : []
+
+    content {
+      type = "CODE_DEPLOY"
+    }
+  }
+
+  # Dev: if a rolling deployment keeps failing, stop it and roll back to the last good one.
+  # (The circuit breaker cannot be combined with the CodeDeploy controller.)
+  dynamic "deployment_circuit_breaker" {
+    for_each = local.blue_green ? [] : [1]
+
+    content {
+      enable   = true
+      rollback = true
+    }
   }
 
   network_configuration {
@@ -160,6 +174,7 @@ resource "aws_ecs_service" "app" {
   # From Phase 5 the pipeline deploys new task definition revisions to this service.
   # Terraform must not switch it back to the revision it created.
   lifecycle {
-    ignore_changes = [task_definition]
+    # CodeDeploy (prod) also swaps the target group on the service after every deployment.
+    ignore_changes = [task_definition, load_balancer]
   }
 }

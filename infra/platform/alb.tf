@@ -10,7 +10,7 @@ resource "aws_lb" "app" {
 }
 
 # Target type "ip" is required for Fargate (awsvpc networking).
-# Phase 7 (blue/green) will add a second target group for the "green" tasks.
+# In prod, bluegreen.tf adds a second target group ("green"); CodeDeploy swaps traffic between them.
 resource "aws_lb_target_group" "app" {
   name        = "${local.name}-tg"
   port        = var.app_port
@@ -39,5 +39,10 @@ resource "aws_lb_listener" "http" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app.arn
+  }
+
+  # In prod, CodeDeploy changes this action to send traffic to the other target group.
+  lifecycle {
+    ignore_changes = [default_action]
   }
 }
