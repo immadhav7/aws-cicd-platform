@@ -101,6 +101,32 @@ curl "http://$(terraform -chdir=infra/platform output -raw alb_dns_name)/version
 later push to `main` starts the pipeline by itself. If the platform is destroyed, the Deploy
 stage fails harmlessly; add `[skip ci]` to a commit message to avoid starting a run.
 
+## Phase 6: prod environment and manual approval
+
+`platform/` builds one environment per Terraform workspace: `default` is dev, `prod` is prod
+(any other workspace name is rejected). The environments share the network, so apply that first.
+
+```bash
+cd infra/platform
+terraform apply                  # dev (default workspace)
+terraform workspace new prod     # creates and switches to the prod workspace
+terraform apply                  # prod
+terraform workspace select default
+```
+
+The pipeline module needs an approval email address (git-ignored):
+
+```bash
+cd infra/pipeline
+printf 'approval_email = "you@example.com"\n' > terraform.tfvars
+terraform apply
+```
+
+SNS sends a confirmation email: click "Confirm subscription" once. Then run
+`./scripts/run-pipeline.sh`; when it waits at ApproveProd, approve by email link, in the
+console, or with `./scripts/approve.sh`. `./scripts/check-versions.sh` shows dev and prod.
+`./scripts/teardown.sh` destroys prod, then dev, then the network.
+
 ## Cost
 
 While running, the **NAT gateway**, the **ALB** and the **Fargate task** all bill by the hour

@@ -26,7 +26,7 @@ Secrets Manager.
 app/     Flask app (/health, /version), tests, Dockerfile
 infra/   Terraform (bootstrap, registry, network, platform, pipeline; later alarms)
 buildspec.yml  CodeBuild steps: test, build image, push to ECR tagged with the commit SHA
-scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), teardown.sh (destroys billable infra)
+scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), approve.sh (approve or reject prod), check-versions.sh (what is live in dev and prod), teardown.sh (destroys billable infra)
 ```
 
 ## Roadmap
@@ -39,7 +39,7 @@ scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), tear
 | 3 | ECR + ECS Fargate + ALB, deployed manually | Done |
 | 4 | CI with CodeBuild (test, build, push to ECR) | Done |
 | 5 | CodePipeline for dev | Done |
-| 6 | Multi-environment + manual approval | |
+| 6 | Multi-environment + manual approval | Done |
 | 7 | Blue/green with CodeDeploy and automatic rollback | |
 | 8 | Observability, diagram, README polish, teardown script | |
 
@@ -123,6 +123,48 @@ Design notes:
 **AWS approved the CodeBuild quota increase**
 
 ![AWS approved the CodeBuild quota increase](docs/images/09-aws-quota-increase-approved.png)
+
+## Environments and manual approval (dev and prod)
+
+```
+Source -> Build -> DeployDev -> ApproveProd (email) -> DeployProd
+```
+
+- **One image, promoted.** The image is built once and tagged with the commit SHA. Prod gets
+  exactly the image that ran in dev; nothing is rebuilt between environments.
+- **Environments are Terraform workspaces** of the same `infra/platform` code: `default` is dev,
+  `prod` is prod. Each has its own state, ALB, ECS cluster, service and IAM role. Dev runs one
+  task, prod runs two. (One account keeps this cheap; for stronger isolation I would use a
+  separate AWS account per environment.)
+- **Manual approval.** CodePipeline publishes to an SNS topic, which emails the approver.
+  Approve in the console or with `./scripts/approve.sh`; `./scripts/approve.sh reject` stops the
+  release and `DeployProd` never runs.
+- `./scripts/check-versions.sh` shows what is live in each environment, so the gate is visible:
+  dev runs the new commit while prod stays on the old one until someone approves.
+
+**Both environments created from the same Terraform code (prod is still warming up)**
+
+![Both environments created from the same Terraform code (prod is still warming up)](docs/images/01-environments-created-dev-v1-prod-warming-up.png)
+
+**Separate ECS clusters: dev runs 1 task, prod runs 2**
+
+![Separate ECS clusters: dev runs 1 task, prod runs 2](docs/images/02-ecs-clusters-dev-1-task-prod-2-tasks.png)
+
+**SNS asks the approver to confirm the email subscription**
+
+![SNS asks the approver to confirm the email subscription](docs/images/03-sns-subscription-confirmation-email.png)
+
+**Subscription confirmed**
+
+![Subscription confirmed](docs/images/04-sns-subscription-confirmed.png)
+
+**The approval gate at work: dev already runs the new commit, prod still runs v1**
+
+![The approval gate at work: dev already runs the new commit, prod still runs v1](docs/images/05-approval-gate-dev-new-sha-prod-still-v1.png)
+
+**Pipeline: Source, Build, DeployDev, ApproveProd, DeployProd**
+
+![Pipeline: Source, Build, DeployDev, ApproveProd, DeployProd](docs/images/06-pipeline-five-stages-succeeded-with-approval.png)
 
 ## Problems solved along the way
 
