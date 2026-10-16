@@ -14,7 +14,7 @@
       "portMappings": [{ "containerPort": 8080, "protocol": "tcp" }],
       "environment": [
         { "name": "APP_ENV", "value": "prod" },
-        { "name": "SIMULATE_FAULT", "value": "1" }
+        { "name": "SIMULATE_FAULT", "value": "0" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
