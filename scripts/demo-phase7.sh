@@ -26,7 +26,7 @@ stage_status() {
 }
 latest_deployment() {
   aws deploy list-deployments --region "${REGION}" --application-name "${APP}" \
-    --deployment-group-name "${APP}" --max-items 1 --query 'deployments[0]' --output text 2>/dev/null
+    --deployment-group-name "${APP}" --query 'deployments[0]' --output text 2>/dev/null
 }
 deployment_status() {
   aws deploy get-deployment --region "${REGION}" --deployment-id "$1" \
@@ -88,6 +88,7 @@ git pull --ff-only -q || die "git pull failed"
   --query "pipeline.stages[?name=='DeployProd'].actions[0].actionTypeId.provider" --output text)" = "CodeDeployToECS" ] \
   || die "the pipeline still deploys prod with ECS: run terraform apply in infra/pipeline first"
 
+if [ "${START_AT:-1}" -le 2 ]; then
 # ---------------------------------------------------------------- 1. infrastructure
 echo; echo "==> 1/5  Creating network, dev and prod"
 terraform -chdir=infra/network apply -auto-approve || die "network apply failed"
@@ -121,6 +122,8 @@ wait "${PIPE_PID}"
 echo "Good deploy finished: ${FINAL}"
 [ "${FINAL}" = "Succeeded" ] || die "the good deploy did not succeed; check the CodeDeploy console"
 pause "SCREENSHOT 4: CodeDeploy deployment ${DEP} with status Succeeded (traffic 100%). SCREENSHOT 5: the pipeline with all 5 stages green."
+
+fi
 
 # ---------------------------------------------------------------- 3. bad deploy
 echo; echo "==> 3/5  Broken deploy: the home page returns 500 but health checks stay green"

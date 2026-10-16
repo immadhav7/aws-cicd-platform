@@ -8,7 +8,7 @@ APP="${CODEDEPLOY_APP:-aws-cicd-prod}"
 GROUP="${CODEDEPLOY_GROUP:-aws-cicd-prod}"
 
 ID="$(aws deploy list-deployments --region "${REGION}" --application-name "${APP}" \
-  --deployment-group-name "${GROUP}" --max-items 1 --query 'deployments[0]' --output text)"
+  --deployment-group-name "${GROUP}" --query 'deployments[0]' --output text)"
 if [ -z "${ID}" ] || [ "${ID}" = "None" ]; then
   echo "No deployments yet."
   exit 0
