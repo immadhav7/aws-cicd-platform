@@ -283,6 +283,7 @@ data "aws_iam_policy_document" "pipeline" {
     sid = "StartProdDeployment"
     actions = [
       "codedeploy:CreateDeployment",
+      "codedeploy:GetApplication",
       "codedeploy:GetDeployment",
       "codedeploy:GetDeploymentConfig",
       "codedeploy:GetApplicationRevision",
@@ -293,6 +294,25 @@ data "aws_iam_policy_document" "pipeline" {
       "arn:aws:codedeploy:${var.region}:${local.account_id}:deploymentgroup:${var.codedeploy_app_name}/${var.codedeploy_deployment_group_name}",
       "arn:aws:codedeploy:${var.region}:${local.account_id}:deploymentconfig:*",
     ]
+  }
+
+  # CodeDeployToECS registers the rendered task definition and hands the task roles to ECS.
+  statement {
+    sid       = "ProdTaskDefinition"
+    actions   = ["ecs:RegisterTaskDefinition"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "PassProdTaskRoles"
+    actions   = ["iam:PassRole"]
+    resources = ["arn:aws:iam::${local.account_id}:role/aws-cicd-prod-*"]
+
+    condition {
+      test     = "StringEqualsIfExists"
+      variable = "iam:PassedToService"
+      values   = ["ecs-tasks.amazonaws.com"]
+    }
   }
 
   statement {
