@@ -8,8 +8,8 @@ Terraform for the platform, split into small root modules so each phase can be a
 | `bootstrap/` | S3 bucket for Terraform state (local state, applied once) | 2 | No |
 | `registry/` | ECR repository for the app images | 3 | No (images survive) |
 | `network/` | VPC, 2 public + 2 private subnets, IGW, NAT, route tables, ALB/app security groups | 2 | Yes |
-| `platform/` | ECS cluster, Fargate service, ALB, target group, IAM execution role, log group | 3 | Yes (first) |
-| `pipeline/` | CodeBuild, CodePipeline (GitHub, build, deploy to dev), GitHub connection, artifact bucket; CodeDeploy and alarms come in Phase 7 | 4-5 | No (idle cost is pennies, and it keeps the GitHub connection authorized) |
+| `platform/` | ECS cluster, Fargate service, ALB, target group, IAM execution role, log group; in prod also a second target group, CodeDeploy and the rollback alarm | 3 | Yes (first) |
+| `pipeline/` | CodeBuild, CodePipeline (GitHub, build, deploy to dev), GitHub connection, artifact bucket; prod is deployed through CodeDeploy | 4-5 | No (idle cost is pennies, and it keeps the GitHub connection authorized) |
 
 Requires Terraform **>= 1.10** (S3 native state locking, no DynamoDB table needed) and
 AWS credentials (`aws sts get-caller-identity` should work).
@@ -126,6 +126,30 @@ SNS sends a confirmation email: click "Confirm subscription" once. Then run
 `./scripts/run-pipeline.sh`; when it waits at ApproveProd, approve by email link, in the
 console, or with `./scripts/approve.sh`. `./scripts/check-versions.sh` shows dev and prod.
 `./scripts/teardown.sh` destroys prod, then dev, then the network.
+
+## Phase 7: blue/green with automatic rollback
+
+Prod only (the `prod` workspace): `platform/bluegreen.tf` adds a second target group, a CodeDeploy
+application and deployment group, and a CloudWatch alarm on 5xx responses. The prod ECS service
+uses the CodeDeploy deployment controller. The pipeline's `DeployProd` action starts a CodeDeploy
+deployment using `taskdef.json` and `appspec.yaml`, which the build fills in from `deploy/`.
+
+```bash
+cd infra/pipeline && terraform apply     # DeployProd now calls CodeDeploy
+cd ../network && terraform apply
+cd ../platform
+terraform workspace select default && terraform apply
+terraform workspace select prod && terraform apply
+terraform workspace select default
+```
+
+Traffic shifting is set by `deployment_config_name` (default: 10% first, the rest after 5 minutes).
+The alarm threshold is `alarm_5xx_threshold` (default 5 errors in a minute).
+
+The rollback demo (`./scripts/demo-phase7.sh`) does a good deploy, then a broken one:
+`./scripts/fault.sh on` makes the home page return 500 while `/health` stays green, so only the
+alarm can catch it. `./scripts/load.sh` sends traffic so the canary has requests to fail.
+Afterwards `./scripts/teardown.sh` and `./scripts/billing-check.sh`.
 
 ## Cost
 

@@ -26,7 +26,7 @@ Secrets Manager.
 app/     Flask app (/health, /version), tests, Dockerfile
 infra/   Terraform (bootstrap, registry, network, platform, pipeline; later alarms)
 buildspec.yml  CodeBuild steps: test, build image, push to ECR tagged with the commit SHA
-scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), approve.sh (approve or reject prod), check-versions.sh (what is live in dev and prod), teardown.sh (destroys billable infra)
+scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), approve.sh (approve or reject prod), check-versions.sh (what is live in dev and prod), load.sh, deploy-status.sh, fault.sh and demo-phase7.sh (the rollback demo), billing-check.sh, teardown.sh (destroys billable infra)
 ```
 
 ## Roadmap
@@ -40,7 +40,7 @@ scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), appr
 | 4 | CI with CodeBuild (test, build, push to ECR) | Done |
 | 5 | CodePipeline for dev | Done |
 | 6 | Multi-environment + manual approval | Done |
-| 7 | Blue/green with CodeDeploy and automatic rollback | |
+| 7 | Blue/green with CodeDeploy and automatic rollback | Done |
 | 8 | Observability, diagram, README polish, teardown script | |
 
 ## Run the app locally
@@ -165,6 +165,56 @@ Source -> Build -> DeployDev -> ApproveProd (email) -> DeployProd
 **Pipeline: Source, Build, DeployDev, ApproveProd, DeployProd**
 
 ![Pipeline: Source, Build, DeployDev, ApproveProd, DeployProd](docs/images/06-pipeline-five-stages-succeeded-with-approval.png)
+
+## Blue/green deploys with automatic rollback (prod)
+
+```
+Source -> Build -> DeployDev -> ApproveProd -> DeployProd (CodeDeploy blue/green, canary)
+```
+
+- **Blue/green.** CodeDeploy starts the new version in a second target group next to the running
+  one, sends 10% of the traffic to it, waits 5 minutes, then sends the rest. The old tasks stay
+  around for a minute before they stop. Dev keeps the plain ECS rolling deploy.
+- **Automatic rollback.** A CloudWatch alarm watches the 5xx responses the app returns. If it fires
+  while a deployment runs, or the deployment fails, CodeDeploy moves all traffic back to the old
+  version by itself and the pipeline's `DeployProd` action fails. Nobody has to react.
+- **Why 5xx and not just health checks.** A bad release often passes `/health` and still breaks real
+  requests. The demo flips `SIMULATE_FAULT` in `deploy/taskdef.json`: `/health` stays green, the home
+  page returns 500. The health check would have let it through; the alarm catches it.
+- **How to see it.** `./scripts/demo-phase7.sh` runs the whole thing (good deploy, broken deploy,
+  rollback, teardown). `./scripts/deploy-status.sh` shows the last deployment and why it ended.
+- **Known limits.** `deploy/taskdef.json` repeats the settings of the Terraform task definition, so
+  the two must be kept in step. The alarm only sees traffic that reaches the ALB, which is why the demo
+  sends requests while the canary runs. After a rollback the alarm needs a couple of minutes to clear
+  before the next deploy can start.
+
+**CodeDeploy deployment group: blue/green, alarm and automatic rollback enabled**
+
+![CodeDeploy deployment group: blue/green, alarm and automatic rollback enabled](docs/images/07-codedeploy-deployment-group-blue-green-alarm-rollback.png)
+
+**Prod answers with both versions while the traffic shifts**
+
+![Prod answers with both versions while the traffic shifts](docs/images/09-check-versions-prod-flipping-during-canary.png)
+
+**Good deploy finished: 100% on the new version**
+
+![Good deploy finished: 100% on the new version](docs/images/10-codedeploy-good-deploy-succeeded.png)
+
+**Pipeline: DeployProd now runs through CodeDeploy**
+
+![Pipeline: DeployProd now runs through CodeDeploy](docs/images/11-pipeline-five-stages-succeeded-blue-green.png)
+
+**Broken deploy: CodeDeploy stopped it because the alarm fired, and rolled back**
+
+![Broken deploy: CodeDeploy stopped it because the alarm fired, and rolled back](docs/images/12-codedeploy-bad-deploy-stopped-by-alarm.png)
+
+**The 5xx alarm that triggered the rollback**
+
+![The 5xx alarm that triggered the rollback](docs/images/13-cloudwatch-alarm-5xx-in-alarm.png)
+
+**Pipeline after the rollback: DeployProd failed, prod untouched**
+
+![Pipeline after the rollback: DeployProd failed, prod untouched](docs/images/14-pipeline-deployprod-failed-after-rollback.png)
 
 ## Problems solved along the way
 
