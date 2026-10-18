@@ -6,6 +6,16 @@ deployment with automatic rollback**.
 
 The app is intentionally tiny. The platform around it is the project.
 
+
+## Architecture
+
+![Architecture: pipeline, dev and prod environments, blue/green with alarm rollback](docs/images/architecture-overview.png)
+
+One pipeline builds the Docker image once, tags it with the 7-character commit SHA, and promotes the
+same image: dev on every push, prod after a manual approval, deployed blue/green with a 10% canary.
+A CloudWatch alarm on 5xx responses stops a bad prod release and rolls traffic back automatically.
+Everything is Terraform (editable diagram source: `docs/architecture-overview.svg`).
+
 ## Target architecture
 
 ```

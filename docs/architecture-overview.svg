@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="880" viewBox="0 0 1500 880">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>
+<rect width="1500" height="880" fill="#ffffff"/>
+<text x="750.0" y="38" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="20" font-weight="bold" fill="#1f2933" text-anchor="middle">aws-cicd-platform: multi-environment CI/CD on AWS (Mumbai, ap-south-1)</text>
+<text x="750.0" y="60" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="12.5" font-weight="normal" fill="#52606d" text-anchor="middle">build once, promote the same image: dev on every push, prod after approval with canary and automatic rollback</text>
+<rect x="30" y="76" width="1440" height="138" rx="12" fill="#fafbfc" stroke="#cbd2d9" stroke-width="1.5"/>
+<text x="48" y="102" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#52606d" text-anchor="start">CI/CD pipeline (CodePipeline V2)</text>
+<rect x="55" y="108" width="190" height="88" rx="9" fill="#f1f3f5" stroke="#868e96" stroke-width="2"/>
+<text x="150.0" y="132" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">GitHub</text>
+<text x="150.0" y="152" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">push to main</text>
+<text x="150.0" y="168" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">(immadhav7/aws-cicd-platform)</text>
+<rect x="295" y="108" width="190" height="88" rx="9" fill="#e8f0fe" stroke="#3b6fd4" stroke-width="2"/>
+<text x="390.0" y="132" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">Source</text>
+<text x="390.0" y="152" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">CodeStar connection</text>
+<text x="390.0" y="168" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">to GitHub</text>
+<rect x="535" y="108" width="190" height="88" rx="9" fill="#e8f0fe" stroke="#3b6fd4" stroke-width="2"/>
+<text x="630.0" y="132" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">Build</text>
+<text x="630.0" y="152" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">CodeBuild builds the</text>
+<text x="630.0" y="168" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">Docker image, tag =</text>
+<text x="630.0" y="184" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">7-char commit SHA</text>
+<rect x="775" y="108" width="190" height="88" rx="9" fill="#e8f0fe" stroke="#3b6fd4" stroke-width="2"/>
+<text x="870.0" y="132" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">DeployDev</text>
+<text x="870.0" y="152" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">ECS rolling deploy</text>
+<text x="870.0" y="168" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">same image as built</text>
+<rect x="1015" y="108" width="190" height="88" rx="9" fill="#e8f0fe" stroke="#3b6fd4" stroke-width="2"/>
+<text x="1110.0" y="132" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">ApproveProd</text>
+<text x="1110.0" y="152" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">manual approval</text>
+<text x="1110.0" y="168" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">SNS email to approver</text>
+<rect x="1255" y="108" width="190" height="88" rx="9" fill="#e8f0fe" stroke="#3b6fd4" stroke-width="2"/>
+<text x="1350.0" y="132" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">DeployProd</text>
+<text x="1350.0" y="152" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">CodeDeploy blue/green</text>
+<text x="1350.0" y="168" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">canary 10%, 5 min</text>
+<path d="M245,152.0 L293,152.0" fill="none" stroke="#3b6fd4" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M485,152.0 L533,152.0" fill="none" stroke="#3b6fd4" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M725,152.0 L773,152.0" fill="none" stroke="#3b6fd4" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M965,152.0 L1013,152.0" fill="none" stroke="#3b6fd4" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M1205,152.0 L1253,152.0" fill="none" stroke="#3b6fd4" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="295" y="256" width="190" height="64" rx="9" fill="#fff4db" stroke="#c98a00" stroke-width="2"/>
+<text x="390.0" y="280" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">S3 artifact bucket</text>
+<text x="390.0" y="300" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">pipeline artifacts</text>
+<rect x="535" y="256" width="190" height="64" rx="9" fill="#fff4db" stroke="#c98a00" stroke-width="2"/>
+<text x="630.0" y="280" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">ECR aws-cicd-app</text>
+<text x="630.0" y="300" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">immutable tags</text>
+<path d="M390.0,196 L390.0,254" fill="none" stroke="#c98a00" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M630.0,196 L630.0,254" fill="none" stroke="#c98a00" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="655" y="224" width="74" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="692.0" y="236" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11" font-weight="normal" fill="#52606d" text-anchor="middle" font-style="italic">push image</text>
+<text x="1110.0" y="280" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#1f2933" text-anchor="middle">SNS topic</text>
+<text x="1110.0" y="298" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">emails the approver</text>
+<path d="M1110.0,196 L1110.0,262" fill="none" stroke="#3b6fd4" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="30" y="352" width="520" height="330" rx="12" fill="#fafbfc" stroke="#cbd2d9" stroke-width="1.5"/>
+<text x="48" y="378" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#52606d" text-anchor="start">dev  (Terraform workspace: default)</text>
+<rect x="52" y="410" width="130" height="84" rx="9" fill="#e7f6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="117.0" y="434" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">ALB</text>
+<text x="117.0" y="454" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">HTTP :80</text>
+<text x="117.0" y="470" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">listener</text>
+<rect x="212" y="410" width="120" height="84" rx="9" fill="#e7f6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="272.0" y="434" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">Target group</text>
+<text x="272.0" y="454" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">/health check</text>
+<text x="272.0" y="470" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">port 8080</text>
+<rect x="362" y="410" width="164" height="84" rx="9" fill="#e7f6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="444.0" y="434" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">ECS Fargate</text>
+<text x="444.0" y="454" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">service: 1 task</text>
+<text x="444.0" y="470" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">pulls image from ECR</text>
+<path d="M182,452 L210,452" fill="none" stroke="#2e8b57" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M332,452 L360,452" fill="none" stroke="#2e8b57" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="290.0" y="540" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="12" font-weight="bold" fill="#1f2933" text-anchor="middle">rolling deploy with circuit breaker:</text>
+<text x="290.0" y="558" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">a failing deployment stops and rolls back by itself</text>
+<text x="290.0" y="596" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">app endpoints: /  /health  /version</text>
+<text x="290.0" y="614" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">/version shows the commit SHA that is live</text>
+<path d="M870.0,196 L870.0,340 L444,340 L444,408" fill="none" stroke="#3b6fd4" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="750" y="332" width="99" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="800" y="344" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11" font-weight="normal" fill="#52606d" text-anchor="middle" font-style="italic">update service</text>
+<rect x="580" y="352" width="890" height="330" rx="12" fill="#fafbfc" stroke="#cbd2d9" stroke-width="1.5"/>
+<text x="598" y="378" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#52606d" text-anchor="start">prod  (Terraform workspace: prod)   blue/green with automatic rollback</text>
+<rect x="602" y="410" width="130" height="84" rx="9" fill="#e7f6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="667.0" y="434" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">ALB</text>
+<text x="667.0" y="454" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">HTTP :80</text>
+<text x="667.0" y="470" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">listener</text>
+<rect x="772" y="396" width="170" height="58" rx="9" fill="#e7f6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="857.0" y="420" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">Target group blue</text>
+<text x="857.0" y="440" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">live version</text>
+<rect x="772" y="468" width="170" height="58" rx="9" fill="#e7f6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="857.0" y="492" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">Target group green</text>
+<text x="857.0" y="512" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">new version (canary)</text>
+<rect x="982" y="410" width="190" height="84" rx="9" fill="#e7f6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="1077.0" y="434" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">ECS Fargate</text>
+<text x="1077.0" y="454" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">service: 2 tasks</text>
+<text x="1077.0" y="470" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">CODE_DEPLOY controller</text>
+<path d="M732,440 L770,425" fill="none" stroke="#2e8b57" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M732,464 L770,497" fill="none" stroke="#2e8b57" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M942,425 L980,440" fill="none" stroke="#2e8b57" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M942,497 L980,464" fill="none" stroke="#2e8b57" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="1252" y="410" width="190" height="84" rx="9" fill="#e8f0fe" stroke="#3b6fd4" stroke-width="2"/>
+<text x="1347.0" y="434" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">CodeDeploy</text>
+<text x="1347.0" y="454" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">deployment group:</text>
+<text x="1347.0" y="470" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">canary 10% then 100%</text>
+<path d="M1350.0,196 L1350.0,408" fill="none" stroke="#3b6fd4" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="1346" y="360" width="112" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="1402.0" y="372" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11" font-weight="normal" fill="#52606d" text-anchor="middle" font-style="italic">start deployment</text>
+<path d="M1252,452 L1174,452" fill="none" stroke="#3b6fd4" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M1300,496 L1300,556 L694,556 L694,496" fill="none" stroke="#3b6fd4" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="810" y="562" width="380" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="1000" y="574" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11" font-weight="normal" fill="#3b6fd4" text-anchor="middle" font-style="italic">moves ALB listener traffic blue &lt;-&gt; green (10%, then 100%)</text>
+<rect x="1252" y="596" width="190" height="70" rx="9" fill="#fdecec" stroke="#c0392b" stroke-width="2"/>
+<text x="1347.0" y="620" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1f2933" text-anchor="middle">CloudWatch alarm</text>
+<text x="1347.0" y="640" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">5xx &gt;= 5 per minute</text>
+<path d="M1400,596 L1400,498" fill="none" stroke="#c0392b" stroke-width="2.2" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="1412" y="560" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11" font-weight="normal" fill="#c0392b" text-anchor="start" font-style="italic">ALARM</text>
+<text x="1000" y="616" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="12" font-weight="bold" fill="#c0392b" text-anchor="middle">alarm fires during a deploy  =&gt;  stop, send all traffic back to blue,</text>
+<text x="1000" y="634" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="12" font-weight="bold" fill="#c0392b" text-anchor="middle">pipeline DeployProd fails, prod stays on the last good version</text>
+<path d="M640,496 L640,652 L1250,652" fill="none" stroke="#c0392b" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah)"/>
+<text x="760" y="668" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="10.5" font-weight="normal" fill="#c0392b" text-anchor="start" font-style="italic">HTTPCode_Target_5XX_Count from the ALB</text>
+<rect x="30" y="706" width="1440" height="120" rx="12" fill="#f1f3f5" stroke="#868e96" stroke-width="1.5"/>
+<text x="48" y="732" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#52606d" text-anchor="start">Everything above is Terraform (remote state in S3)</text>
+<rect x="52" y="748" width="270" height="62" rx="8" fill="#ffffff" stroke="#868e96" stroke-width="1.5"/>
+<text x="187.0" y="772" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#1f2933" text-anchor="middle">infra/bootstrap</text>
+<text x="187.0" y="792" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">state bucket</text>
+<rect x="330" y="748" width="270" height="62" rx="8" fill="#ffffff" stroke="#868e96" stroke-width="1.5"/>
+<text x="465.0" y="772" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#1f2933" text-anchor="middle">infra/registry</text>
+<text x="465.0" y="792" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">ECR, immutable tags</text>
+<rect x="608" y="748" width="270" height="62" rx="8" fill="#ffffff" stroke="#868e96" stroke-width="1.5"/>
+<text x="743.0" y="772" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#1f2933" text-anchor="middle">infra/network</text>
+<text x="743.0" y="792" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">VPC and subnets</text>
+<rect x="886" y="748" width="270" height="62" rx="8" fill="#ffffff" stroke="#868e96" stroke-width="1.5"/>
+<text x="1021.0" y="772" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#1f2933" text-anchor="middle">infra/platform</text>
+<text x="1021.0" y="792" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">ALB, ECS Fargate,</text>
+<rect x="1164" y="748" width="270" height="62" rx="8" fill="#ffffff" stroke="#868e96" stroke-width="1.5"/>
+<text x="1299.0" y="772" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="bold" fill="#1f2933" text-anchor="middle">infra/pipeline</text>
+<text x="1299.0" y="792" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">CodeBuild, CodePipeline,</text>
+<text x="1021.0" y="806" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">blue/green + alarm (prod)</text>
+<text x="1299.0" y="806" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle">SNS approval, GitHub link</text>
+<text x="750.0" y="858" font-family="DejaVu Sans, Verdana, Arial, sans-serif" font-size="11.5" font-weight="normal" fill="#52606d" text-anchor="middle" font-style="italic">Teardown script + billing check after every session: nothing billable is left running.</text>
+</svg>
