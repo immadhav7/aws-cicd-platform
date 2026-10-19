@@ -16,34 +16,37 @@ same image: dev on every push, prod after a manual approval, deployed blue/green
 A CloudWatch alarm on 5xx responses stops a bad prod release and rolls traffic back automatically.
 Everything is Terraform (editable diagram source: `docs/architecture-overview.svg`).
 
-## Target architecture
+## Highlights
 
-```
-GitHub --> CodePipeline --> CodeBuild --> ECR
-                |
-                +--> Deploy (dev)  ECS Fargate + ALB
-                +--> Manual approval (SNS email)
-                +--> Deploy (prod) ECS Fargate + ALB, CodeDeploy blue/green
-                                   rollback on CloudWatch alarm
-```
+- **One pipeline, two environments.** Source, Build, DeployDev, ApproveProd, DeployProd. The image is
+  built once, tagged with the commit SHA and promoted, never rebuilt.
+- **Blue/green with automatic rollback.** Prod deploys through CodeDeploy: 10% canary, 5 minutes,
+  then the rest. A CloudWatch alarm on 5xx responses rolls traffic back with nobody watching.
+- **All Terraform.** Five small root modules, one `platform` code base for both environments
+  (workspaces), least-privilege IAM per service.
+- **Observable.** A CloudWatch dashboard per environment, created with the platform.
+- **Cheap to run.** `teardown.sh` and `billing-check.sh` bring the bill back to zero after every session.
 
-Everything is created with Terraform. Config lives in SSM Parameter Store, secrets in
-Secrets Manager.
+## Prerequisites
+
+An AWS account on a **paid plan** (CodeDeploy is not available on the free plan), Terraform 1.10 or
+newer, the AWS CLI, Docker, and a GitHub repository. Step order is in `infra/README.md`.
 
 ## Repo layout
 
 ```
 app/     Flask app (/health, /version), tests, Dockerfile
-infra/   Terraform (bootstrap, registry, network, platform, pipeline; later alarms)
+infra/   Terraform (bootstrap, registry, network, platform, pipeline)
 buildspec.yml  CodeBuild steps: test, build image, push to ECR tagged with the commit SHA
-scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), approve.sh (approve or reject prod), check-versions.sh (what is live in dev and prod), load.sh, deploy-status.sh, fault.sh and demo-phase7.sh (the rollback demo), billing-check.sh, teardown.sh (destroys billable infra)
+deploy/  taskdef.json and appspec.yaml templates for the CodeDeploy blue/green deploy
+scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), approve.sh (approve or reject prod), check-versions.sh (what is live in dev and prod), load.sh, deploy-status.sh, fault.sh and demo-phase7.sh (the rollback demo), demo-phase8.sh (the dashboard demo), billing-check.sh, teardown.sh (destroys billable infra)
 ```
 
 ## Roadmap
 
 | Phase | What | Status |
 |-------|------|--------|
-| 0 | Setup: AWS account/IAM user, budget alert, repo | In progress |
+| 0 | Setup: AWS account/IAM user, budget alert, repo | Done |
 | 1 | Containerize the app | Done |
 | 2 | Networking with Terraform (VPC, subnets, SGs, remote state) | Done |
 | 3 | ECR + ECS Fargate + ALB, deployed manually | Done |
@@ -51,7 +54,7 @@ scripts/ push-image.sh (manual push), run-pipeline.sh (start the pipeline), appr
 | 5 | CodePipeline for dev | Done |
 | 6 | Multi-environment + manual approval | Done |
 | 7 | Blue/green with CodeDeploy and automatic rollback | Done |
-| 8 | Observability, diagram, README polish, teardown script | |
+| 8 | Observability, diagram, README polish, teardown script | Done |
 
 ## Run the app locally
 
@@ -247,6 +250,18 @@ first 3 dashboards in an account are free).
 
 ![CloudWatch dashboard for prod: traffic, 5xx, latency, healthy targets, CPU and memory, and the rollback alarm](docs/images/16-cloudwatch-dashboard-prod.png)
 
+## Design decisions and trade-offs
+
+- **Build once, promote.** Prod runs the exact image that passed in dev. Rebuilding per environment
+  would make "tested in dev" mean nothing.
+- **Workspaces for environments.** Same code, separate state, so dev and prod cannot drift apart in
+  structure. For real isolation I would use one AWS account per environment.
+- **Alarm on 5xx, not only health checks.** A bad release can pass `/health` and still fail real requests.
+- **Pipeline stays up, platform goes down.** The pipeline costs pennies and keeps the GitHub connection
+  authorized; the NAT gateway, ALBs and tasks are what bill, so only those are destroyed.
+- **Terraform ignores the task definition after creation.** The pipeline owns deploys, so
+  `terraform apply` never reverts a release.
+
 ## Problems solved along the way
 
 - **CodeBuild quota was 0** on a new account. I requested an increase (approved: 15 concurrent
@@ -258,9 +273,26 @@ first 3 dashboards in an account are free).
 - **Immutable tags vs re-runs**: re-running a build for the same commit used to fail at
   `docker push`; the build now checks ECR first and reuses the image.
 
+- **CodeDeploy needed a paid plan.** The deployment failed with `SubscriptionRequiredException` on
+  the free plan; upgrading fixed it.
+- **The pipeline role was missing three permissions** for the CodeDeploy deploy action
+  (`codedeploy:GetApplication`, `ecs:RegisterTaskDefinition`, `iam:PassRole` limited to the prod
+  roles). Found in the pipeline's error message and added to the Terraform policy.
+- **Rollback goes to the last successful deployment.** A broken release that CodeDeploy counted as
+  successful became the rollback target, so the next rollback restored the broken build. Lesson: the
+  alarm must fire during the canary, and the demo needs traffic (`load.sh`) for that.
+- **The alarm only sees traffic that reaches the ALB**, and 5xx metrics exist only when errors occur,
+  so an empty 5xx graph means zero errors, not a broken graph.
+
 ## Cost control
 
-The ALB, NAT gateway, and Fargate tasks cost money while running. Run `terraform destroy`
-after every working session.
+The NAT gateway, two ALBs (dev and prod) and the Fargate tasks bill by the hour: roughly 0.15 USD per
+hour with both environments up. Create them for a working session and destroy them afterwards:
 
-CodeBuild quota approved (15 concurrent Linux/Small builds, ap-south-1).
+```bash
+./scripts/teardown.sh        # destroys prod, then dev, then the network
+./scripts/billing-check.sh   # prints "All clear" when nothing billable is left
+```
+
+The state bucket, the ECR repository and the pipeline stay (pennies per month). While the platform is
+down the pipeline's Deploy stages fail harmlessly; use `[skip ci]` in docs-only commits.

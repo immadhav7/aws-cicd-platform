@@ -8,13 +8,13 @@ Terraform for the platform, split into small root modules so each phase can be a
 | `bootstrap/` | S3 bucket for Terraform state (local state, applied once) | 2 | No |
 | `registry/` | ECR repository for the app images | 3 | No (images survive) |
 | `network/` | VPC, 2 public + 2 private subnets, IGW, NAT, route tables, ALB/app security groups | 2 | Yes |
-| `platform/` | ECS cluster, Fargate service, ALB, target group, IAM execution role, log group; in prod also a second target group, CodeDeploy and the rollback alarm | 3 | Yes (first) |
+| `platform/` | ECS cluster, Fargate service, ALB, target group, IAM execution role, log group; in prod also a second target group, CodeDeploy and the rollback alarm; a CloudWatch dashboard per environment | 3 | Yes (first) |
 | `pipeline/` | CodeBuild, CodePipeline (GitHub, build, deploy to dev), GitHub connection, artifact bucket; prod is deployed through CodeDeploy | 4-5 | No (idle cost is pennies, and it keeps the GitHub connection authorized) |
 
 Requires Terraform **>= 1.10** (S3 native state locking, no DynamoDB table needed) and
-AWS credentials (`aws sts get-caller-identity` should work).
+AWS credentials (`aws sts get-caller-identity` should work). CodeDeploy (phase 7) needs a paid AWS plan.
 
-Dependency order: `bootstrap` -> `registry` -> (push image) -> `network` -> `platform`.
+Dependency order: `bootstrap` -> `registry` -> (push image) -> `network` -> `platform` -> `pipeline`.
 Teardown runs the other way round (`platform`, then `network`).
 
 ## Phase 2: state bucket and network
@@ -162,10 +162,11 @@ stops for a screenshot, then runs `./scripts/teardown.sh` and `./scripts/billing
 ## Cost
 
 While running, the **NAT gateway**, the **ALB** and the **Fargate task** all bill by the hour
-(very roughly $0.10 per hour together). Destroy them when you stop for the day:
+(roughly $0.15 per hour with dev and prod both up). Destroy them when you stop for the day:
 
 ```bash
 ./scripts/teardown.sh
+./scripts/billing-check.sh    # must print "All clear"
 ```
 
 `bootstrap` (state) and `registry` (images) stay, since they cost almost nothing.
