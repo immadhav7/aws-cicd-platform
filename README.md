@@ -226,6 +226,27 @@ Source -> Build -> DeployDev -> ApproveProd -> DeployProd (CodeDeploy blue/green
 
 ![Pipeline after the rollback: DeployProd failed, prod untouched](docs/images/14-pipeline-deployprod-failed-after-rollback.png)
 
+## Observability
+
+Each environment gets its own CloudWatch dashboard, created by Terraform with the platform
+(`infra/platform/dashboard.tf`). It answers "is it healthy right now?" at a glance:
+
+- **Traffic and errors.** Requests, successful answers and 5xx answers per minute at the load balancer.
+  The 5xx graph has the prod rollback threshold drawn on it.
+- **Latency.** Average and p95 response time of the app.
+- **Targets.** Healthy and unhealthy tasks behind the load balancer; in prod also the green target
+  group, which is the new version during a deploy.
+- **ECS service.** CPU and memory of the Fargate tasks.
+- **Rollback alarm (prod).** The same alarm that stops a bad deploy, so the state of a release and
+  the reason for a rollback are on one screen.
+
+The dashboards are part of the platform stack, so they are created and destroyed with it (the
+first 3 dashboards in an account are free).
+
+**CloudWatch dashboard for prod: traffic, 5xx, latency, healthy targets, CPU and memory, and the rollback alarm**
+
+![CloudWatch dashboard for prod: traffic, 5xx, latency, healthy targets, CPU and memory, and the rollback alarm](docs/images/16-cloudwatch-dashboard-prod.png)
+
 ## Problems solved along the way
 
 - **CodeBuild quota was 0** on a new account. I requested an increase (approved: 15 concurrent

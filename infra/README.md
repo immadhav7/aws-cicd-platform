@@ -151,6 +151,14 @@ The rollback demo (`./scripts/demo-phase7.sh`) does a good deploy, then a broken
 alarm can catch it. `./scripts/load.sh` sends traffic so the canary has requests to fail.
 Afterwards `./scripts/teardown.sh` and `./scripts/billing-check.sh`.
 
+## Phase 8: CloudWatch dashboards
+
+`platform/dashboard.tf` adds one dashboard per environment (named like the environment, for example
+`aws-cicd-prod`): traffic, 5xx with the rollback threshold, latency, healthy targets, ECS CPU and
+memory, and in prod the green target group and the rollback alarm. The `dashboard_url` output has
+the console link. `./scripts/demo-phase8.sh` brings the environments up, sends traffic to prod,
+stops for a screenshot, then runs `./scripts/teardown.sh` and `./scripts/billing-check.sh`.
+
 ## Cost
 
 While running, the **NAT gateway**, the **ALB** and the **Fargate task** all bill by the hour
